@@ -2,4 +2,7 @@ bin/
 obj/
 .vs/
 .idea/
-artifacts
+artifacts/
+.package-stage/
+*.zip
+*.user
