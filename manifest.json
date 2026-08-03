@@ -9,6 +9,14 @@
         "imageUrl":  "",
         "versions":  [
                          {
+                             "version":  "1.0.1.0",
+                             "changelog":  "Rebuild against Jellyfin 10.11.5 packages for CSR_Jellyfin compatibility",
+                             "targetAbi":  "10.11.0.0",
+                             "sourceUrl":  "https://github.com/retrorat1/Jellyfin.Plugin.TelJel/releases/download/v1.0.1.0/Jellyfin.Plugin.TelJel.zip",
+                             "checksum":  "8bf330241bcbdc6375e3557b6e1e8efa",
+                             "timestamp":  "2026-08-03T14:12:00Z"
+                         },
+                         {
                              "version":  "1.0.0.0",
                              "changelog":  "Initial release: item-added notifications for movies and TV with library-to-group routing",
                              "targetAbi":  "10.0.0.0",
