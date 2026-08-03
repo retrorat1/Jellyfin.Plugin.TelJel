@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>TelJel</title>
+</head>
+<body>
+    <div id="TelJelConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="TelJelConfigForm">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">TelJel</h2>
+                    </div>
+                    <p>Send rich Telegram notifications when movies and TV episodes are added. Link Telegram groups to Jellyfin libraries.</p>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="EnablePlugin" name="EnablePlugin" type="checkbox" is="emby-checkbox" />
+                            <span>Enable notifications</span>
+                        </label>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="BotToken">Telegram bot token</label>
+                        <input id="BotToken" name="BotToken" type="password" is="emby-input" autocomplete="off" />
+                        <div class="fieldDescription">Create a bot with @BotFather and paste the token here.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ServerUrl">Public Jellyfin URL</label>
+                        <input id="ServerUrl" name="ServerUrl" type="text" is="emby-input" placeholder="https://jellyfin.example.com" />
+                        <div class="fieldDescription">Used for poster images. Must be reachable by Telegram (or use an internal URL if Telegram runs on the same network via a local bot API).</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="TvBatchDelaySeconds">TV batch delay (seconds)</label>
+                        <input id="TvBatchDelaySeconds" name="TvBatchDelaySeconds" type="number" is="emby-input" min="5" />
+                        <div class="fieldDescription">Wait this long after the last new episode before sending one combined TV notification.</div>
+                    </div>
+
+                    <div class="sectionTitleContainer flex align-items-center" style="margin-top:1.5em;">
+                        <h2 class="sectionTitle">Telegram groups</h2>
+                    </div>
+                    <p class="fieldDescription">Each group has a chat id and optional library filter. Leave libraries unchecked to receive all libraries.</p>
+
+                    <div id="GroupsContainer"></div>
+
+                    <div style="margin:1em 0;">
+                        <button is="emby-button" type="button" class="raised block emby-button" id="AddGroupBtn">
+                            <span>Add group</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var TelJelConfig = {
+                pluginUniqueId: 'f662aa5a-4148-4c41-b8ff-0e1facacb5dd',
+                libraries: [],
+                groups: []
+            };
+
+            function newGroup() {
+                return {
+                    Id: 'g' + Math.random().toString(16).slice(2) + Date.now().toString(16),
+                    Name: '',
+                    ChatId: '',
+                    ThreadId: '',
+                    LibraryIds: [],
+                    Enabled: true,
+                    SilentNotification: false
+                };
+            }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function renderGroups() {
+                var container = document.querySelector('#GroupsContainer');
+                container.innerHTML = '';
+
+                if (!TelJelConfig.groups.length) {
+                    container.innerHTML = '<p class="fieldDescription">No groups yet. Add one to start routing notifications.</p>';
+                    return;
+                }
+
+                TelJelConfig.groups.forEach(function (group, index) {
+                    var selected = {};
+                    (group.LibraryIds || []).forEach(function (id) { selected[id] = true; });
+
+                    var libraryChecks = TelJelConfig.libraries.map(function (lib) {
+                        var checked = selected[lib.Id] ? ' checked' : '';
+                        return '<label class="emby-checkbox-label" style="display:block;margin:0.25em 0;">' +
+                            '<input type="checkbox" class="group-library" data-index="' + index + '" data-lib="' + escapeHtml(lib.Id) + '"' + checked + ' />' +
+                            '<span>' + escapeHtml(lib.Name) + '</span></label>';
+                    }).join('');
+
+                    if (!libraryChecks) {
+                        libraryChecks = '<p class="fieldDescription">No libraries found.</p>';
+                    }
+
+                    var card = document.createElement('div');
+                    card.className = 'inputContainer';
+                    card.style.cssText = 'border:1px solid rgba(255,255,255,0.12);padding:1em;margin-bottom:1em;border-radius:6px;';
+                    card.innerHTML =
+                        '<div class="checkboxContainer checkboxContainer-withDescription">' +
+                            '<label class="emby-checkbox-label">' +
+                                '<input type="checkbox" class="group-enabled" data-index="' + index + '"' + (group.Enabled ? ' checked' : '') + ' />' +
+                                '<span>Enabled</span>' +
+                            '</label>' +
+                        '</div>' +
+                        '<div class="inputContainer">' +
+                            '<label class="inputLabel">Name</label>' +
+                            '<input type="text" class="group-name emby-input" data-index="' + index + '" value="' + escapeHtml(group.Name) + '" placeholder="Movies group" />' +
+                        '</div>' +
+                        '<div class="inputContainer">' +
+                            '<label class="inputLabel">Telegram chat id</label>' +
+                            '<input type="text" class="group-chat emby-input" data-index="' + index + '" value="' + escapeHtml(group.ChatId) + '" placeholder="-100xxxxxxxxxx" />' +
+                        '</div>' +
+                        '<div class="inputContainer">' +
+                            '<label class="inputLabel">Thread id (optional)</label>' +
+                            '<input type="text" class="group-thread emby-input" data-index="' + index + '" value="' + escapeHtml(group.ThreadId || '') + '" />' +
+                        '</div>' +
+                        '<div class="checkboxContainer checkboxContainer-withDescription">' +
+                            '<label class="emby-checkbox-label">' +
+                                '<input type="checkbox" class="group-silent" data-index="' + index + '"' + (group.SilentNotification ? ' checked' : '') + ' />' +
+                                '<span>Silent notification</span>' +
+                            '</label>' +
+                        '</div>' +
+                        '<div style="margin:0.75em 0 0.25em;"><strong>Libraries</strong> <span class="fieldDescription">(none selected = all)</span></div>' +
+                        '<div class="group-libraries">' + libraryChecks + '</div>' +
+                        '<div style="display:flex;gap:0.5em;margin-top:1em;">' +
+                            '<button is="emby-button" type="button" class="raised emby-button group-test" data-index="' + index + '"><span>Test</span></button>' +
+                            '<button is="emby-button" type="button" class="raised emby-button group-remove" data-index="' + index + '"><span>Remove</span></button>' +
+                        '</div>';
+
+                    container.appendChild(card);
+                });
+
+                container.querySelectorAll('.group-name').forEach(function (el) {
+                    el.addEventListener('input', function () {
+                        TelJelConfig.groups[Number(el.getAttribute('data-index'))].Name = el.value;
+                    });
+                });
+                container.querySelectorAll('.group-chat').forEach(function (el) {
+                    el.addEventListener('input', function () {
+                        TelJelConfig.groups[Number(el.getAttribute('data-index'))].ChatId = el.value;
+                    });
+                });
+                container.querySelectorAll('.group-thread').forEach(function (el) {
+                    el.addEventListener('input', function () {
+                        TelJelConfig.groups[Number(el.getAttribute('data-index'))].ThreadId = el.value;
+                    });
+                });
+                container.querySelectorAll('.group-enabled').forEach(function (el) {
+                    el.addEventListener('change', function () {
+                        TelJelConfig.groups[Number(el.getAttribute('data-index'))].Enabled = el.checked;
+                    });
+                });
+                container.querySelectorAll('.group-silent').forEach(function (el) {
+                    el.addEventListener('change', function () {
+                        TelJelConfig.groups[Number(el.getAttribute('data-index'))].SilentNotification = el.checked;
+                    });
+                });
+                container.querySelectorAll('.group-library').forEach(function (el) {
+                    el.addEventListener('change', function () {
+                        var idx = Number(el.getAttribute('data-index'));
+                        var libId = el.getAttribute('data-lib');
+                        var ids = TelJelConfig.groups[idx].LibraryIds || [];
+                        if (el.checked) {
+                            if (ids.indexOf(libId) === -1) ids.push(libId);
+                        } else {
+                            ids = ids.filter(function (id) { return id !== libId; });
+                        }
+                        TelJelConfig.groups[idx].LibraryIds = ids;
+                    });
+                });
+                container.querySelectorAll('.group-remove').forEach(function (el) {
+                    el.addEventListener('click', function () {
+                        var idx = Number(el.getAttribute('data-index'));
+                        TelJelConfig.groups.splice(idx, 1);
+                        renderGroups();
+                    });
+                });
+                container.querySelectorAll('.group-test').forEach(function (el) {
+                    el.addEventListener('click', function () {
+                        var idx = Number(el.getAttribute('data-index'));
+                        var group = TelJelConfig.groups[idx];
+                        Dashboard.showLoadingMsg();
+                        // Persist first so the API can find the group.
+                        ApiClient.getPluginConfiguration(TelJelConfig.pluginUniqueId).then(function (config) {
+                            collectForm(config);
+                            return ApiClient.updatePluginConfiguration(TelJelConfig.pluginUniqueId, config).then(function () {
+                                return ApiClient.ajax({
+                                    type: 'POST',
+                                    url: ApiClient.getUrl('TelJel/Test/' + encodeURIComponent(group.Id)),
+                                    dataType: 'json'
+                                });
+                            });
+                        }).then(function () {
+                            Dashboard.hideLoadingMsg();
+                            Dashboard.alert('Test message sent to ' + (group.Name || group.ChatId));
+                        }).catch(function (err) {
+                            Dashboard.hideLoadingMsg();
+                            Dashboard.alert('Test failed. Save settings, check bot token / chat id, and try again.');
+                            console.error(err);
+                        });
+                    });
+                });
+            }
+
+            function collectForm(config) {
+                config.EnablePlugin = document.querySelector('#EnablePlugin').checked;
+                config.BotToken = document.querySelector('#BotToken').value;
+                config.ServerUrl = document.querySelector('#ServerUrl').value;
+                config.TvBatchDelaySeconds = parseInt(document.querySelector('#TvBatchDelaySeconds').value, 10) || 150;
+                config.Groups = TelJelConfig.groups;
+            }
+
+            document.querySelector('#AddGroupBtn').addEventListener('click', function () {
+                TelJelConfig.groups.push(newGroup());
+                renderGroups();
+            });
+
+            document.querySelector('#TelJelConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                Promise.all([
+                    ApiClient.getPluginConfiguration(TelJelConfig.pluginUniqueId),
+                    ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('TelJel/Libraries'), dataType: 'json' }).catch(function () { return []; })
+                ]).then(function (results) {
+                    var config = results[0];
+                    TelJelConfig.libraries = results[1] || [];
+                    document.querySelector('#EnablePlugin').checked = !!config.EnablePlugin;
+                    document.querySelector('#BotToken').value = config.BotToken || '';
+                    document.querySelector('#ServerUrl').value = config.ServerUrl || '';
+                    document.querySelector('#TvBatchDelaySeconds').value = config.TvBatchDelaySeconds || 150;
+                    TelJelConfig.groups = config.Groups || [];
+                    renderGroups();
+                    Dashboard.hideLoadingMsg();
+                }).catch(function (err) {
+                    Dashboard.hideLoadingMsg();
+                    console.error(err);
+                });
+            });
+
+            document.querySelector('#TelJelConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(TelJelConfig.pluginUniqueId).then(function (config) {
+                    collectForm(config);
+                    return ApiClient.updatePluginConfiguration(TelJelConfig.pluginUniqueId, config);
+                }).then(function (result) {
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                }).catch(function (err) {
+                    Dashboard.hideLoadingMsg();
+                    console.error(err);
+                });
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
