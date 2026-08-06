@@ -6,7 +6,7 @@
         "overview":  "Telegram media-added notifications",
         "owner":  "Rob",
         "category":  "Notifications",
-        "imageUrl":  "",
+        "imageUrl":  "https://raw.githubusercontent.com/retrorat1/Jellyfin.Plugin.TelJel/main/thumb.png",
         "versions":  [
                          {
                              "version":  "1.0.2.0",
