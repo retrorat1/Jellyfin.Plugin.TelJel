@@ -331,9 +331,9 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
                 continue;
             }
 
+            // Only notify when at least one library is explicitly selected (ticked).
             if (group.LibraryIds == null || group.LibraryIds.Length == 0)
             {
-                result.Add(group);
                 continue;
             }
 

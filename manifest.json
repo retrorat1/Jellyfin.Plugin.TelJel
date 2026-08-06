@@ -9,12 +9,20 @@
         "imageUrl":  "",
         "versions":  [
                          {
+                             "version":  "1.0.2.0",
+                             "changelog":  "Library checkboxes: tick to select, plus Select all / Clear",
+                             "targetAbi":  "10.0.0.0",
+                             "sourceUrl":  "https://github.com/retrorat1/Jellyfin.Plugin.TelJel/releases/download/v1.0.2.0/Jellyfin.Plugin.TelJel.zip",
+                             "checksum":  "2c6effd56ec2965efddbc1c925d83a33",
+                             "timestamp":  "2026-08-06T12:45:24Z"
+                         },
+                         {
                              "version":  "1.0.1.0",
-                             "changelog":  "Rebuild against Jellyfin 10.11.5 packages for CSR_Jellyfin compatibility",
-                             "targetAbi":  "10.11.0.0",
+                             "changelog":  "Automated package build",
+                             "targetAbi":  "10.0.0.0",
                              "sourceUrl":  "https://github.com/retrorat1/Jellyfin.Plugin.TelJel/releases/download/v1.0.1.0/Jellyfin.Plugin.TelJel.zip",
-                             "checksum":  "8bf330241bcbdc6375e3557b6e1e8efa",
-                             "timestamp":  "2026-08-03T14:12:00Z"
+                             "checksum":  "31793be2d94394d2742b7aad909710b8",
+                             "timestamp":  "2026-08-06T12:41:59Z"
                          },
                          {
                              "version":  "1.0.0.0",

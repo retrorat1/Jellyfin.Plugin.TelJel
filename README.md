@@ -49,7 +49,7 @@ https://raw.githubusercontent.com/retrorat1/Jellyfin.Plugin.TelJel/main/manifest
    - Name (label only)
    - Chat id (group/channel id, often starts with `-100`)
    - Optional thread id for forum topics
-   - Select libraries (none selected = all libraries)
+   - Tick the libraries that should notify this group (Select all available)
 4. Save, then use **Test**.
 
 ### Getting a chat id
@@ -58,17 +58,9 @@ https://raw.githubusercontent.com/retrorat1/Jellyfin.Plugin.TelJel/main/manifest
 2. Send a message in the group.
 3. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` and read `chat.id`.
 
-## Build / package
+## Build
 
 Requires [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0).
-
-```powershell
-.\build-and-package.ps1 -Version "1.0.0.0" -Changelog "Initial release"
-```
-
-Then create a GitHub release tagged `v1.0.0.0` and upload `Jellyfin.Plugin.TelJel.zip`. Commit/push the updated `manifest.json`.
-
-Or build only:
 
 ```bash
 dotnet build Jellyfin.Plugin.TelJel.sln -c Release
@@ -78,7 +70,7 @@ Output DLL:
 
 `Jellyfin.Plugin.TelJel/bin/Release/net9.0/Jellyfin.Plugin.TelJel.dll`
 
-Built against Jellyfin **10.11** packages. `manifest.json` uses a broad `targetAbi` of `10.0.0.0` for install compatibility.
+Built against Jellyfin **10.11** packages. Publish a GitHub release zip containing the DLL (and `meta.json`), then update `manifest.json` with the zip URL and MD5 checksum.
 
 ## How it works
 

@@ -42,7 +42,7 @@
                     <div class="sectionTitleContainer flex align-items-center" style="margin-top:1.5em;">
                         <h2 class="sectionTitle">Telegram groups</h2>
                     </div>
-                    <p class="fieldDescription">Each group has a chat id and optional library filter. Leave libraries unchecked to receive all libraries.</p>
+                    <p class="fieldDescription">Each group has a chat id and a library list. Tick the libraries that should notify this group.</p>
 
                     <div id="GroupsContainer"></div>
 
@@ -140,7 +140,12 @@
                                 '<span>Silent notification</span>' +
                             '</label>' +
                         '</div>' +
-                        '<div style="margin:0.75em 0 0.25em;"><strong>Libraries</strong> <span class="fieldDescription">(none selected = all)</span></div>' +
+                        '<div style="margin:0.75em 0 0.25em;display:flex;align-items:center;gap:0.75em;flex-wrap:wrap;">' +
+                            '<strong>Libraries</strong>' +
+                            '<span class="fieldDescription">(tick to include)</span>' +
+                            '<button is="emby-button" type="button" class="raised emby-button group-select-all" data-index="' + index + '"><span>Select all</span></button>' +
+                            '<button is="emby-button" type="button" class="raised emby-button group-clear-all" data-index="' + index + '"><span>Clear</span></button>' +
+                        '</div>' +
                         '<div class="group-libraries">' + libraryChecks + '</div>' +
                         '<div style="display:flex;gap:0.5em;margin-top:1em;">' +
                             '<button is="emby-button" type="button" class="raised emby-button group-test" data-index="' + index + '"><span>Test</span></button>' +
@@ -186,6 +191,20 @@
                             ids = ids.filter(function (id) { return id !== libId; });
                         }
                         TelJelConfig.groups[idx].LibraryIds = ids;
+                    });
+                });
+                container.querySelectorAll('.group-select-all').forEach(function (el) {
+                    el.addEventListener('click', function () {
+                        var idx = Number(el.getAttribute('data-index'));
+                        TelJelConfig.groups[idx].LibraryIds = TelJelConfig.libraries.map(function (lib) { return lib.Id; });
+                        renderGroups();
+                    });
+                });
+                container.querySelectorAll('.group-clear-all').forEach(function (el) {
+                    el.addEventListener('click', function () {
+                        var idx = Number(el.getAttribute('data-index'));
+                        TelJelConfig.groups[idx].LibraryIds = [];
+                        renderGroups();
                     });
                 });
                 container.querySelectorAll('.group-remove').forEach(function (el) {

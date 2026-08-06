@@ -6,3 +6,5 @@ artifacts/
 .package-stage/
 *.zip
 *.user
+build-and-package*.ps1
+deploy*.ps1

@@ -43,7 +43,7 @@ public class TelegramGroupConfiguration
 
     /// <summary>
     /// Gets or sets Jellyfin library (collection folder) ids this group should receive.
-    /// Empty means all libraries.
+    /// Empty means no libraries (nothing is sent until at least one is selected).
     /// </summary>
     public string[] LibraryIds { get; set; }
 
