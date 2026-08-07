@@ -2,8 +2,8 @@
     {
         "guid":  "f662aa5a-4148-4c41-b8ff-0e1facacb5dd",
         "name":  "TelJel",
-        "description":  "Rich Telegram notifications when movies and TV episodes are added. Route to Telegram groups linked to Jellyfin libraries.",
-        "overview":  "Telegram media-added notifications",
+        "description":  "TelJel sends rich Telegram messages when new movies and TV episodes appear in your Jellyfin libraries. Route notifications to different Telegram groups by selecting which libraries each group should receive. Includes posters (when a public Jellyfin URL is set), metadata captions, TV episode batching, and a per-group test button. Uses Jellyfin metadata — no extra TMDb API key required.",
+        "overview":  "Telegram notifications when movies and TV episodes are added to Jellyfin",
         "owner":  "Rob",
         "category":  "Notifications",
         "imageUrl":  "https://raw.githubusercontent.com/retrorat1/Jellyfin.Plugin.TelJel/main/thumb.png",
