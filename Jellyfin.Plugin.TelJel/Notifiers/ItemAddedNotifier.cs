@@ -174,7 +174,7 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
 
     private async Task NotifyMovieAsync(Movie movie, IReadOnlyList<TelegramGroupConfiguration> groups, PluginConfiguration config)
     {
-        var libraryName = GetLibraryName(movie);
+        var libraryName = GetLibraryName(movie, groups);
         var message = MessageBuilder.BuildMovieMessage(movie, libraryName);
         var imageUrl = MessageBuilder.BuildPrimaryImageUrl(config.ServerUrl, movie.Id);
 
@@ -269,7 +269,7 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
 
             var epStart = epNumbers.Min();
             var epEnd = epNumbers.Max();
-            var libraryName = GetLibraryName(episodes[0]);
+            var libraryName = GetLibraryName(episodes[0], batch.Groups);
             var metaSource = (BaseItem?)series ?? episodes[0];
             var (rating, cert, genres) = MessageBuilder.FormatMeta(metaSource);
             var overview = MessageBuilder.PickTvOverview(episodes, series);
@@ -351,7 +351,8 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            foreach (var folder in _libraryManager.GetCollectionFolders(item))
+            // Prefer real libraries only — skip virtual views like "All TV Shows".
+            foreach (var folder in ResolveCollectionFolders(item))
             {
                 ids.Add(folder.Id.ToString("N"));
                 ids.Add(folder.Id.ToString());
@@ -365,14 +366,41 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
         return ids;
     }
 
-    private string GetLibraryName(BaseItem item)
+    private string GetLibraryName(BaseItem item, IReadOnlyList<TelegramGroupConfiguration>? matchedGroups = null)
     {
         try
         {
-            var folder = _libraryManager.GetCollectionFolders(item).FirstOrDefault();
-            if (folder != null && !string.IsNullOrWhiteSpace(folder.Name))
+            var collections = ResolveCollectionFolders(item);
+            if (collections.Count == 0)
             {
-                return folder.Name;
+                return "library";
+            }
+
+            // Prefer a library the group actually selected (e.g. On the Air over All TV Shows).
+            if (matchedGroups is { Count: > 0 })
+            {
+                var selected = matchedGroups
+                    .SelectMany(g => g.LibraryIds ?? Array.Empty<string>())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var preferred = collections.FirstOrDefault(f =>
+                    selected.Contains(f.Id.ToString("N")) || selected.Contains(f.Id.ToString()));
+                if (preferred != null && !string.IsNullOrWhiteSpace(preferred.Name))
+                {
+                    return preferred.Name;
+                }
+            }
+
+            var byPath = MatchBestByPath(item, collections);
+            if (byPath != null && !string.IsNullOrWhiteSpace(byPath.Name))
+            {
+                return byPath.Name;
+            }
+
+            var first = collections[0];
+            if (!string.IsNullOrWhiteSpace(first.Name))
+            {
+                return first.Name;
             }
         }
         catch
@@ -381,6 +409,73 @@ public sealed class ItemAddedNotifier : IHostedService, IDisposable
         }
 
         return "library";
+    }
+
+    private List<CollectionFolder> ResolveCollectionFolders(BaseItem item)
+    {
+        var fromApi = _libraryManager.GetCollectionFolders(item)
+            .OfType<CollectionFolder>()
+            .ToList();
+
+        if (fromApi.Count > 0)
+        {
+            return fromApi;
+        }
+
+        // Fallback: match item path against configured CollectionFolder libraries.
+        var rootLibraries = _libraryManager.GetUserRootFolder().Children
+            .OfType<CollectionFolder>()
+            .ToList();
+
+        var matched = MatchBestByPath(item, rootLibraries);
+        return matched == null ? [] : [matched];
+    }
+
+    private static CollectionFolder? MatchBestByPath(BaseItem item, List<CollectionFolder> libraries)
+    {
+        var path = item.Path;
+        if (string.IsNullOrWhiteSpace(path) || libraries.Count == 0)
+        {
+            return null;
+        }
+
+        CollectionFolder? best = null;
+        var bestLen = -1;
+
+        foreach (var library in libraries)
+        {
+            foreach (var location in GetLibraryLocations(library))
+            {
+                if (string.IsNullOrWhiteSpace(location))
+                {
+                    continue;
+                }
+
+                if (path.StartsWith(location, StringComparison.OrdinalIgnoreCase) && location.Length > bestLen)
+                {
+                    best = library;
+                    bestLen = location.Length;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    private static IEnumerable<string> GetLibraryLocations(CollectionFolder library)
+    {
+        if (!string.IsNullOrWhiteSpace(library.Path))
+        {
+            yield return library.Path;
+        }
+
+        foreach (var location in library.PhysicalLocations)
+        {
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                yield return location;
+            }
+        }
     }
 
     private sealed class TvBatch

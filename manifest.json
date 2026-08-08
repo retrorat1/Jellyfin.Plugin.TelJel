@@ -2,12 +2,20 @@
     {
         "guid":  "f662aa5a-4148-4c41-b8ff-0e1facacb5dd",
         "name":  "TelJel",
-        "description":  "TelJel sends rich Telegram messages when new movies and TV episodes appear in your Jellyfin libraries. Route notifications to different Telegram groups by selecting which libraries each group should receive. Includes posters (when a public Jellyfin URL is set), metadata captions, TV episode batching, and a per-group test button. Uses Jellyfin metadata — no extra TMDb API key required.",
+        "description":  "TelJel sends rich Telegram messages when new movies and TV episodes appear in your Jellyfin libraries. Route notifications to different Telegram groups by selecting which libraries each group should receive. Includes posters (when a public Jellyfin URL is set), metadata captions, TV episode batching, and a per-group test button. Uses Jellyfin metadata â€” no extra TMDb API key required.",
         "overview":  "Telegram notifications when movies and TV episodes are added to Jellyfin",
         "owner":  "Rob",
         "category":  "Notifications",
         "imageUrl":  "https://raw.githubusercontent.com/retrorat1/Jellyfin.Plugin.TelJel/main/thumb.png",
         "versions":  [
+                         {
+                             "version":  "1.0.3.0",
+                             "changelog":  "Fix TV notifications naming the virtual All TV Shows view instead of the real library (e.g. On the Air)",
+                             "targetAbi":  "10.11.0.0",
+                             "sourceUrl":  "https://github.com/retrorat1/Jellyfin.Plugin.TelJel/releases/download/v1.0.3.0/Jellyfin.Plugin.TelJel.zip",
+                             "checksum":  "3969f3f09d82fa12010b27ae13e89e01",
+                             "timestamp":  "2026-08-08T20:26:59Z"
+                         },
                          {
                              "version":  "1.0.2.0",
                              "changelog":  "Library checkboxes: tick to select, plus Select all / Clear",

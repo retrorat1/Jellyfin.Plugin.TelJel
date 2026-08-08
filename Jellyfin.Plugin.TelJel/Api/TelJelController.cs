@@ -47,9 +47,10 @@ public class TelJelController : ControllerBase
     [HttpGet("Libraries")]
     public ActionResult GetLibraries()
     {
+        // Real libraries only — exclude virtual views like "All TV Shows" / "Movies".
         var root = _libraryManager.GetUserRootFolder();
         var libraries = root.Children
-            .OfType<Folder>()
+            .OfType<CollectionFolder>()
             .Select(c => new { Id = c.Id.ToString("N"), c.Name })
             .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();

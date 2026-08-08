@@ -1,7 +1,7 @@
 ---
 name: "TelJel"
 guid: "f662aa5a-4148-4c41-b8ff-0e1facacb5dd"
-version: "1.0.1.0"
+version: "1.0.3.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Rich Telegram notifications when movies and TV episodes are added to Jellyfin"
@@ -13,4 +13,4 @@ owner: "TelJel"
 artifacts:
 - "Jellyfin.Plugin.TelJel.dll"
 changelog: >
-  Initial release: item-added notifications for movies and TV with library-to-group routing
+  Fix TV notifications naming the virtual All TV Shows view instead of the real library
